@@ -1,0 +1,252 @@
+# Delivery Operations Dashboard — End-to-End Build Plan
+
+## Summary
+
+Build a mobile-first deliveryservice operations dashboard using
+
+- Next.js + TypeScript
+- MongoDB Atlas with Mongoose
+- shadcnui and Tailwind CSS
+- TanStack Table for operational data grids
+- Recharts or equivalent for analytics
+- Role-based authentication for admins and staff
+- Core-first release without external notifications or payment integrations
+
+The system will manage customers, propertiesaddresses, services, delivery routes, staff assignments, service charges, collections, monthly reports, holidays, and operational history.
+
+## Product scope
+
+### Core workflows
+
+- Admin and staff login
+- Customer and propertyaddress management
+- Service catalog and pricing
+- Per-service transaction creation
+- Delivery scheduling and route planning
+- Assignment of deliveries to staff
+- Mobile delivery status updates
+- Rescheduling, cancellation, and completion tracking
+- Charges and payment-status tracking
+- Monthly billing and collection summaries
+- Holiday management and delivery impact visibility
+- Search, filtering, pagination, sorting, and export-ready reports
+- Audit history for important state changes
+
+### Roles
+
+- Admin
+  - Manage users, services, pricing, holidays, customers, properties, and reports
+  - View all operations
+  - Correct or reverse financial records
+- Staff
+  - View assigned routes
+  - Update delivery status
+  - Add notes and proof-of-delivery information
+  - View only operational data needed for assigned work
+
+## Recommended architecture
+
+Use a modular Next.js application
+
+- App Router for pages and layouts
+- Server-side data access for protected operations
+- Route handlers or server actions for mutations
+- Mongoose models and repositoryservice layers
+- Zod schemas for input validation
+- Central authorization policies for adminstaff access
+- MongoDB indexes for customer lookup, delivery dates, status, staff assignment, and billing history
+- Background-job interface reserved for future WhatsApp, email, and calendar integrations
+
+Suggested domain modules
+
+- `auth`
+- `users`
+- `customers`
+- `properties`
+- `services`
+- `orders`
+- `routes`
+- `charges`
+- `collections`
+- `holidays`
+- `reports`
+- `audit`
+
+## Data model
+
+Primary entities
+
+- User
+- Customer
+- Property or delivery address
+- Service
+- Orderservice transaction
+- Route
+- Route stop
+- Charge
+- Collectionpayment record
+- Holiday
+- Audit event
+
+Important design decisions
+
+- Store money as integer minor units rather than floating-point values.
+- Keep order status and payment status separate.
+- Preserve historical price snapshots on completed orders.
+- Use immutable audit records for financial and status changes.
+- Store all operational timestamps in UTC and render them in the configured business timezone.
+- Make delivery status transitions explicit and validated.
+- Avoid deleting financial records; use reversal or void states.
+
+## Mobile-first interface
+
+Main screens
+
+1. Login
+2. Today’s route
+3. Route detail and stop list
+4. Deliveryservice detail
+5. Customer and property search
+6. Create service transaction
+7. Charges and collections
+8. Calendar
+9. Reports and monthly history
+10. Admin settings
+11. Users and permissions
+12. Holidays
+
+Mobile workflow priorities
+
+- Large touch targets
+- Minimal typing during delivery
+- Offline-tolerant draft updates where practical
+- Fast status actions assigned, en route, delivered, failed, rescheduled
+- Route-first staff home screen
+- Admin tables remain responsive with horizontal scrolling and compact filters
+
+Use shadcnui components as owned source code, with TanStack Table for sorting, filtering, pagination, row actions, and column visibility. Official shadcn documentation supports this composition model and TanStack Table integration [shadcnui introduction](httpsui.shadcn.comdocs), [data tables](httpsui.shadcn.comdocscomponentsradixdata-table).
+
+## Delivery phases
+
+### Phase 0 — Product validation
+
+- Confirm terminology for customer, property, service, route, charge, collection, and holiday.
+- Define status transition rules.
+- Confirm currency, timezone, tax behavior, and payment-status vocabulary.
+- Produce low-fidelity mobile route screens and admin reporting screens.
+- Create acceptance criteria for the first usable workflow.
+
+### Phase 1 — Foundation
+
+- Initialize Next.js TypeScript project.
+- Configure Tailwind, shadcnui, linting, formatting, testing, and environment variables.
+- Configure MongoDB Atlas development database.
+- Add authentication and role checks.
+- Add shared validation, error handling, logging, and API response conventions.
+- Add base layout, navigation, responsive shell, and design tokens.
+
+MongoDB Atlas is appropriate for this project because it provides managed deployment, backups, monitoring, scaling, and security controls with lower operational overhead than self-hosting [MongoDB deployment guidance](httpswww.mongodb.comdocsdeployment).
+
+### Phase 2 — Core operations
+
+- Implement customers and properties.
+- Implement services and pricing.
+- Implement service transactions.
+- Implement delivery statuses and history.
+- Implement route creation and staff assignment.
+- Implement mobile route execution.
+- Add search, filtering, and pagination.
+
+### Phase 3 — Charges and reporting
+
+- Add charge creation from completed services.
+- Add collectionpayment-status tracking.
+- Add monthly summaries.
+- Add outstanding balance reporting.
+- Add service-volume, completion-rate, and staff-performance analytics.
+- Add export-ready report views.
+
+### Phase 4 — Calendar and holidays
+
+- Add internal delivery calendar.
+- Add holiday declarations.
+- Show holiday conflicts and affected routes.
+- Support rescheduling workflows.
+- Keep Google Calendar as a future adapter rather than a v1 dependency.
+
+Google Calendar offers REST resources for calendars, events, calendar lists, and access control, with narrowly scoped OAuth permissions recommended [Google Calendar API overview](httpsdevelopers.google.comworkspacecalendarapiguidesoverview), [Calendar scopes](httpsdevelopers.google.comworkspacecalendarapiauth).
+
+### Phase 5 — Production readiness
+
+- Add automated unit, integration, and end-to-end tests.
+- Add database backup verification.
+- Add audit and error monitoring.
+- Add rate limiting and security headers.
+- Add seed data and staging environment.
+- Deploy preview and production environments.
+- Configure domain, secrets, monitoring, and rollback procedure.
+
+Next.js deployment on Vercel is a suitable default because it supports automatic builds, preview deployments, and production promotion from a Git repository [Next.js on Vercel](httpsvercel.comdocsframeworksfull-stacknextjs), [Vercel deployments](httpsvercel.comdocsdeployments).
+
+## Deferred integrations
+
+Implement adapter interfaces during v1 but do not depend on them for launch
+
+- WhatsApp Cloud API
+- Email provider
+- Google Calendar
+- Online payment gateway
+- Accounting export
+
+WhatsApp should be added only after message templates, webhook handling, consent, delivery-status tracking, and Meta Business Platform billing are finalized. Meta’s platform has moved toward per-message pricing and requires careful template and delivery planning [Meta WhatsApp Business update](httpsabout.fb.comnews202507centralized-campaigns-ai-support-businesses-whatsapp).
+
+## Testing and acceptance criteria
+
+### Automated tests
+
+- Authentication and role authorization
+- Customerproperty CRUD
+- Service price snapshotting
+- Delivery status transitions
+- Route assignment and reassignment
+- Holiday conflict handling
+- Charge creation and reversal
+- Monthly report calculations
+- Pagination, filtering, and search
+- Validation and error handling
+
+### End-to-end scenarios
+
+- Admin creates a customer, property, service, route, and staff assignment.
+- Staff completes a mobile delivery route.
+- A failed delivery is rescheduled.
+- A completed service creates a charge.
+- A collection changes the payment status.
+- Admin views monthly totals and outstanding balances.
+- A holiday causes affected services to appear for review.
+- Staff cannot access admin-only settings or another staff member’s private assignments.
+
+### Launch acceptance
+
+The first release is acceptable when
+
+- A staff member can complete an assigned route from a phone.
+- Admin can trace every service from customer to delivery to charge.
+- Financial totals are reproducible from stored transactions.
+- Invalid status transitions are rejected.
+- Role restrictions are enforced server-side.
+- Reports match independently calculated test fixtures.
+- The application can be deployed from a clean environment using documented setup steps.
+
+## Assumptions
+
+- The business is a deliveryservice operation.
+- Launch users are admins and staff.
+- Billing is primarily per-delivery or per-service transaction.
+- The product is mobile-first.
+- No existing infrastructure is assumed.
+- Notifications are excluded from v1.
+- Payments are tracked manually in v1 rather than processed online.
+- WhatsApp and calendar integrations are phase-two work.
+- The first release is single-business rather than multi-tenant.
+- Currency, tax rules, service terminology, and business timezone still require confirmation.
