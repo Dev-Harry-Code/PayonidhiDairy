@@ -30,12 +30,12 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-2xl">Payonidhi Dairy</CardTitle>
-        <p className="text-sm text-muted-foreground">Digital milk register</p>
+    <Card className="w-full border-border/80 shadow-[0_20px_60px_rgba(23,53,45,0.10)]">
+      <CardHeader className="border-b border-border/70 bg-card px-6 py-6">
+        <CardTitle className="text-2xl tracking-tight">Welcome back</CardTitle>
+        <p className="text-sm text-muted-foreground">Sign in to manage today’s milk deliveries.</p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-6 py-6">
         <form className="space-y-5" onSubmit={submit}>
           <div className="space-y-2">
             <Label htmlFor="phone">Phone number</Label>

@@ -9,16 +9,16 @@ export default async function AdminPage() {
   const dashboard = await getDashboard(todayKey());
   return (
     <section className="space-y-6">
-      <div>
-        <p className="text-sm font-medium text-primary">Admin workspace</p>
-        <h1 className="text-3xl font-semibold tracking-tight">Today overview</h1>
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Admin workspace</p><h1 className="mt-1 text-3xl font-semibold tracking-tight md:text-4xl">Today overview</h1><p className="mt-2 text-sm text-muted-foreground">Keep every route moving and every litre accounted for.</p></div>
+        <span className="w-fit rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground">Live register</span>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardHeader><CardTitle>Milk delivered</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{formatLitres(dashboard.today.totalMl)}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Active customers</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{dashboard.activeCustomers}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Hawkers</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{dashboard.hawkers.length}</CardContent></Card>
+        <Card className="border-primary/20 bg-primary text-primary-foreground shadow-lg shadow-primary/10"><CardHeader><CardTitle className="text-primary-foreground/75">Milk delivered</CardTitle></CardHeader><CardContent className="text-3xl font-semibold">{formatLitres(dashboard.today.totalMl)}</CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-muted-foreground">Active customers</CardTitle></CardHeader><CardContent className="text-3xl font-semibold">{dashboard.activeCustomers}</CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-muted-foreground">Hawkers on route</CardTitle></CardHeader><CardContent className="text-3xl font-semibold">{dashboard.hawkers.length}</CardContent></Card>
       </div>
-      <Card><CardHeader><CardTitle>Today by hawker</CardTitle></CardHeader><CardContent><div className="space-y-3">{dashboard.hawkers.map((hawker) => <div key={hawker.id} className="flex items-center justify-between border-b pb-3 last:border-0"><div><p className="font-medium">{hawker.name}</p><p className="text-sm text-muted-foreground">Morning {hawker.morning.delivered}/{hawker.morning.total} · Evening {hawker.evening.delivered}/{hawker.evening.total}</p></div><span className="text-sm">{hawker.morning.pending + hawker.evening.pending} pending</span></div>)}</div></CardContent></Card>
+      <Card><CardHeader className="border-b border-border/70"><CardTitle>Today by hawker</CardTitle><p className="text-sm text-muted-foreground">Route progress across the team</p></CardHeader><CardContent className="pt-4"><div className="space-y-1">{dashboard.hawkers.map((hawker) => <div key={hawker.id} className="flex items-center justify-between rounded-xl px-3 py-3 transition-colors hover:bg-muted/60"><div><p className="font-medium">{hawker.name}</p><p className="text-sm text-muted-foreground">Morning {hawker.morning.delivered}/{hawker.morning.total} · Evening {hawker.evening.delivered}/{hawker.evening.total}</p></div><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${hawker.morning.pending + hawker.evening.pending ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>{hawker.morning.pending + hawker.evening.pending ? `${hawker.morning.pending + hawker.evening.pending} pending` : "Complete"}</span></div>)}</div></CardContent></Card>
     </section>
   );
 }
