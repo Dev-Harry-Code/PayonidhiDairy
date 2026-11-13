@@ -7,7 +7,7 @@ import { SettingsModel, type Settings } from "@/models";
 const DEFAULT_SETTINGS = {
   key: "app" as const,
   businessName: "Payonidhi Dairy",
-  defaultRatePaise: 6_000,
+  defaultRatePaise: 6_500,
   hawkerEditDays: 1,
   hawkerMaxPauseDays: 3,
   showAmountToHawkers: false,
@@ -24,6 +24,10 @@ export async function getSettings(): Promise<Settings> {
   ).lean<Settings>();
 
   if (!settings) throw new Error("Unable to load application settings");
+  if (settings.defaultRatePaise === 6_000) {
+    const migrated = await SettingsModel.findOneAndUpdate({ key: "app", defaultRatePaise: 6_000 }, { $set: { defaultRatePaise: 6_500 } }, { new: true }).lean<Settings>();
+    if (migrated) return migrated;
+  }
   return settings;
 }
 

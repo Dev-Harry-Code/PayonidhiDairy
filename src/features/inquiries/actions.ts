@@ -7,6 +7,7 @@ import { fail, ok, validationError, type ActionResult } from "@/lib/result";
 import { normalisePhone } from "@/lib/phone";
 import { todayKey } from "@/lib/dates";
 import { CustomerInquiryModel, CustomerModel, UserModel } from "@/models";
+import { getSettings } from "@/features/settings/queries";
 import { writeAudit } from "@/lib/audit";
 import { inquiryInputSchema, reviewInquirySchema } from "@/features/inquiries/schemas";
 
@@ -41,8 +42,10 @@ export async function reviewCustomerInquiryAction(input: unknown): Promise<Actio
   const hawker = await UserModel.findOne({ _id: inquiry.hawkerId, role: "hawker", active: true });
   if (!hawker) return fail("VALIDATION", "errors.invalidHawker");
   const last = await CustomerModel.findOne({ hawkerId: inquiry.hawkerId }).sort({ routeOrder: -1 }).lean();
-  const ratePaise = parsed.data.rateRupees === "" || parsed.data.rateRupees === undefined ? null : Math.round(Number(parsed.data.rateRupees) * 100);
-  const customer = await CustomerModel.create({ name: inquiry.name, phone: inquiry.phone, address: inquiry.address, area: inquiry.area, notes: inquiry.notes, hawkerId: inquiry.hawkerId, routeOrder: (last?.routeOrder ?? 0) + 10, morningQtyMl: inquiry.morningQtyMl, eveningQtyMl: inquiry.eveningQtyMl, ratePaise, startDate: parsed.data.startDate || todayKey(), endDate: null, active: true, createdBy: new Types.ObjectId(actor.userId) });
+  const settings = await getSettings();
+  const ratePaise = parsed.data.rateRupees === "" || parsed.data.rateRupees === undefined ? settings.defaultRatePaise : Math.round(Number(parsed.data.rateRupees) * 100);
+  const approvalDate = todayKey();
+  const customer = await CustomerModel.create({ name: inquiry.name, phone: inquiry.phone, address: inquiry.address, area: inquiry.area, notes: inquiry.notes, hawkerId: inquiry.hawkerId, routeOrder: (last?.routeOrder ?? 0) + 10, morningQtyMl: inquiry.morningQtyMl, eveningQtyMl: inquiry.eveningQtyMl, ratePaise, startDate: approvalDate, endDate: null, active: true, createdBy: new Types.ObjectId(actor.userId) });
   inquiry.set({ ...reviewed, status: "approved" });
   await inquiry.save();
   await writeAudit({ actor: { id: actor.userId, role: actor.role }, action: "customer.inquiry_approve", entity: "CustomerInquiry", entityId: inquiry._id, summary: `Approved customer inquiry for ${customer.name}` });
