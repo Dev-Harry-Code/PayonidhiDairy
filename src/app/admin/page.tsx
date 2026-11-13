@@ -6,6 +6,7 @@ import { formatLitres, formatRupees } from "@/lib/units";
 import { getDay } from "date-fns";
 import { listPendingInquiries } from "@/features/inquiries/queries";
 import { InquiryReviewCard } from "@/features/inquiries/components/inquiry-review-card";
+import { ExportButtons } from "@/features/reports/components/export-buttons";
 
 export default async function AdminPage() {
   await requireRole(["admin"]);
@@ -14,11 +15,14 @@ export default async function AdminPage() {
   const pendingInquiries = await listPendingInquiries();
   const calendarOffset = getDay(parseDateKey(`${dashboard.monthKey}-01`));
   const maxDayMl = Math.max(...dashboard.calendar.map((day) => day.totalMl), 1);
+  const overviewRows = dashboard.todayCustomers.map((customer) => ({ Customer: customer.name, Hawker: customer.hawkerName, "Demand (L)": customer.demandMl / 1000, "Delivered (L)": customer.deliveredMl / 1000, Completion: `${customer.completionPercent}%`, "Expected (₹)": customer.deliveredAmountPaise / 100 }));
+  const monthlyRows = dashboard.calendar.map((day) => ({ Date: day.dateKey, "Milk (L)": day.totalMl / 1000, Deliveries: day.deliveries, "Amount (₹)": day.amountPaise / 100 }));
 
   return (
     <section className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Admin workspace</p><h1 className="mt-1 text-3xl font-semibold tracking-tight md:text-4xl">Today overview</h1><p className="mt-2 text-sm text-muted-foreground">A clear view of milk delivered, expected value, and route progress.</p></div>
+        <div className="flex flex-wrap items-center gap-2"><ExportButtons title={`Customer delivery overview · ${dateKey}`} filename={`payonidhi-overview-${dateKey}`} rows={overviewRows} compact /><ExportButtons title={`Monthly delivery summary · ${dashboard.monthKey}`} filename={`payonidhi-monthly-summary-${dashboard.monthKey}`} rows={monthlyRows} compact /></div>
         <span className="w-fit rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground">{dateKey}</span>
       </div>
 
@@ -28,6 +32,8 @@ export default async function AdminPage() {
         <Card><CardHeader><CardTitle className="text-muted-foreground">Completion</CardTitle></CardHeader><CardContent><p className="text-3xl font-semibold">{dashboard.today.completionPercent}%</p><div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(dashboard.today.completionPercent, 100)}%` }} /></div></CardContent></Card>
         <Card><CardHeader><CardTitle className="text-muted-foreground">Active customers</CardTitle></CardHeader><CardContent><p className="text-3xl font-semibold">{dashboard.activeCustomers}</p><p className="mt-1 text-sm text-muted-foreground">across {dashboard.hawkers.length} hawker routes</p></CardContent></Card>
       </div>
+
+      <Card><CardHeader><CardTitle>Quick analytics</CardTitle><p className="text-sm text-muted-foreground">Operational signals from today and this month.</p></CardHeader><CardContent className="grid gap-4 sm:grid-cols-3"><div className="rounded-xl bg-muted/40 p-4"><p className="text-sm text-muted-foreground">Average delivered per customer</p><p className="mt-1 text-2xl font-semibold">{dashboard.activeCustomers ? (dashboard.today.totalMl / dashboard.activeCustomers / 1000).toFixed(1) : "0.0"} L</p></div><div className="rounded-xl bg-muted/40 p-4"><p className="text-sm text-muted-foreground">Month-to-date milk</p><p className="mt-1 text-2xl font-semibold">{formatLitres(dashboard.calendar.reduce((sum, day) => sum + day.totalMl, 0))}</p></div><div className="rounded-xl bg-muted/40 p-4"><p className="text-sm text-muted-foreground">Month-to-date collection</p><p className="mt-1 text-2xl font-semibold">{formatRupees(dashboard.calendar.reduce((sum, day) => sum + day.amountPaise, 0))}</p></div></CardContent></Card>
 
       {pendingInquiries.length > 0 && <section className="space-y-3"><div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700">Needs your review</p><h2 className="text-2xl font-semibold">New customer requests</h2></div>{pendingInquiries.map((inquiry) => <InquiryReviewCard key={inquiry.id} inquiry={inquiry} />)}</section>}
 
