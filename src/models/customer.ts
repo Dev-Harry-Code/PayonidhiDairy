@@ -5,6 +5,7 @@ import { isValidPhone } from "@/lib/phone";
 
 export interface Customer {
   name: string;
+  nameHi?: string | null;
   phone: string | null;
   address: string;
   area: string | null;
@@ -32,6 +33,7 @@ const qtyValidator = {
 const customerSchema = new Schema<Customer>(
   {
     name: { type: String, required: true, minlength: 2, maxlength: 80, trim: true },
+    nameHi: { type: String, default: null, maxlength: 80, trim: true },
     phone: {
       type: String,
       default: null,

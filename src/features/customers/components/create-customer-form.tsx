@@ -16,6 +16,7 @@ export function CreateCustomerForm({ hawkers }: { hawkers: Array<{ id: string; n
   }
   return <form onSubmit={submit} className="grid gap-3 rounded-lg border bg-card p-4 md:grid-cols-2">
     <input name="name" required placeholder="Customer name" className="rounded-md border px-3 py-2" />
+    <input name="nameHi" placeholder="Customer name in Hindi (optional)" className="rounded-md border px-3 py-2" />
     <input name="phone" placeholder="Phone (optional)" className="rounded-md border px-3 py-2" />
     <input name="address" required placeholder="Address" className="rounded-md border px-3 py-2 md:col-span-2" />
     <input name="area" placeholder="Area (optional)" className="rounded-md border px-3 py-2" />

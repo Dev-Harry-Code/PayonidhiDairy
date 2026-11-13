@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/features/auth/actions";
 
-export function LogoutButton() {
+export function LogoutButton({ label = "Log out" }: { label?: string }) {
   const router = useRouter();
   return (
     <Button
@@ -16,7 +16,7 @@ export function LogoutButton() {
         router.refresh();
       }}
     >
-      Log out
+      {label}
     </Button>
   );
 }

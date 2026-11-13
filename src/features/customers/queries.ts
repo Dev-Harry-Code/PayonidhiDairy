@@ -16,6 +16,7 @@ export async function listCustomers(params: CustomerListParams = {}) {
   return rows.map((customer) => ({
     id: customer._id.toString(),
     name: customer.name,
+    nameHi: customer.nameHi ?? null,
     phone: customer.phone,
     address: customer.address,
     area: customer.area,
