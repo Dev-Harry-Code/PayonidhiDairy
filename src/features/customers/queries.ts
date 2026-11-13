@@ -19,6 +19,7 @@ export async function listCustomers(params: CustomerListParams = {}) {
     phone: customer.phone,
     address: customer.address,
     area: customer.area,
+    notes: customer.notes,
     hawkerId: customer.hawkerId.toString(),
     routeOrder: customer.routeOrder,
     morningQtyMl: customer.morningQtyMl,

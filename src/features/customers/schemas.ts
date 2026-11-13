@@ -12,13 +12,17 @@ export const customerInputSchema = z.object({
   hawkerId: z.string().min(1),
   morningQtyMl: z.coerce.number().int().min(0),
   eveningQtyMl: z.coerce.number().int().min(0),
-  ratePaise: z.coerce.number().int().min(0).optional().or(z.literal("")),
+  rateRupees: z.coerce.number().min(0).optional().or(z.literal("")),
   startDate: z.string().refine(isValidDateKey, "Invalid date"),
 }).refine((value) => value.morningQtyMl > 0 || value.eveningQtyMl > 0, {
   path: ["morningQtyMl"],
   message: "At least one shift is required",
 });
 
-export const updateCustomerSchema = customerInputSchema.extend({ id: z.string().min(1) });
+export const updateCustomerSchema = customerInputSchema.extend({
+  id: z.string().min(1),
+  active: z.boolean().optional().or(z.enum(["true", "false"]).transform((value) => value === "true")),
+  endDate: z.string().optional().or(z.literal("")).refine((value) => !value || isValidDateKey(value), "Invalid end date"),
+});
 
 export const deactivateCustomerSchema = z.object({ id: z.string().min(1), endDate: z.string().refine(isValidDateKey, "Invalid date") });

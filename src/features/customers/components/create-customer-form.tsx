@@ -19,7 +19,7 @@ export function CreateCustomerForm({ hawkers }: { hawkers: Array<{ id: string; n
     <select name="hawkerId" required className="rounded-md border px-3 py-2"><option value="">Assign hawker</option>{hawkers.map((hawker) => <option key={hawker.id} value={hawker.id}>{hawker.name}</option>)}</select>
     <input name="morningQtyMl" type="number" min="0" defaultValue="0" required placeholder="Morning ml" className="rounded-md border px-3 py-2" />
     <input name="eveningQtyMl" type="number" min="0" defaultValue="0" required placeholder="Evening ml" className="rounded-md border px-3 py-2" />
-    <input name="ratePaise" type="number" min="0" placeholder="Rate per litre (paise)" className="rounded-md border px-3 py-2" />
+    <input name="rateRupees" type="number" min="0" step="0.01" placeholder="Rate per litre (₹)" className="rounded-md border px-3 py-2" />
     <input name="startDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} className="rounded-md border px-3 py-2" />
     <button disabled={pending} className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-60 md:col-span-2">{pending ? "Saving…" : "Add customer"}</button>
     {message && <p className="text-sm text-muted-foreground md:col-span-2">{message}</p>}

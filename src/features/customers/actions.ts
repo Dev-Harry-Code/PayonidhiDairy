@@ -65,7 +65,7 @@ async function prepareCustomer(input: Record<string, unknown>) {
     name: String(input.name), phone: phoneValue, address: String(input.address), area: input.area ? String(input.area) : null,
     notes: input.notes ? String(input.notes) : null, hawkerId,
     morningQtyMl: Number(input.morningQtyMl), eveningQtyMl: Number(input.eveningQtyMl),
-    ratePaise: input.ratePaise === "" || input.ratePaise === undefined ? null : Number(input.ratePaise),
-    startDate: String(input.startDate), endDate: null, active: true,
+    ratePaise: input.rateRupees === "" || input.rateRupees === undefined ? null : Math.round(Number(input.rateRupees) * 100),
+    startDate: String(input.startDate), endDate: input.endDate ? String(input.endDate) : null, active: input.active === undefined ? true : input.active === true || input.active === "true",
   };
 }

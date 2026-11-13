@@ -26,7 +26,7 @@ export async function getDashboard(dateKey: string) {
     return { id: hawker._id.toString(), name: hawker.name, morning: progress("morning"), evening: progress("evening") };
   });
   const customerById = new Map(customers.map((customer) => [customer._id.toString(), customer]));
-  const rateFor = (customerId: string, storedRate?: number) => storedRate ?? customerById.get(customerId)?.ratePaise ?? settings.defaultRatePaise;
+  const rateFor = (customerId: string, storedRate?: number) => customerById.get(customerId)?.ratePaise ?? storedRate ?? settings.defaultRatePaise;
   const todayDemandMl = customers.reduce((sum, customer) => sum + customer.morningQtyMl + customer.eveningQtyMl, 0);
   const todayAmountPaise = todayDelivered.reduce((sum, entry) => sum + amountPaise(entry.quantityMl, rateFor(entry.customerId.toString(), entry.ratePaise)), 0);
   const todayDemandAmountPaise = customers.reduce((sum, customer) => sum + amountPaise(customer.morningQtyMl + customer.eveningQtyMl, customer.ratePaise ?? settings.defaultRatePaise), 0);
