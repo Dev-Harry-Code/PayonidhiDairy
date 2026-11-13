@@ -20,6 +20,10 @@ npm run dev
 
 Open <http://localhost:3000>.
 
+## Launch checklist
+
+Before production use, set `MONGODB_URI`, a randomly generated `SESSION_SECRET` of at least 32 characters, and `APP_URL` in the hosting provider. Create the first admin with `npm run create-admin`, then seed only test data in non-production environments. Run the production build, verify admin and hawker logins on a phone, and keep a backup of the MongoDB database before the pilot.
+
 ## Scripts
 
 | Command | Purpose |

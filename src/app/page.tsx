@@ -1,18 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/dal";
 
-export default function Home() {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-6">
-      <Card className="w-full max-w-md shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Payonidhi Dairy – setup OK</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <p className="text-muted-foreground">दूध का हिसाब</p>
-          <Button>Continue</Button>
-        </CardContent>
-      </Card>
-    </main>
-  );
+export default async function Home() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  redirect(session.role === "admin" ? "/admin" : "/hawker/today");
 }

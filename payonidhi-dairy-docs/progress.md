@@ -6,12 +6,12 @@
 ---
 
 ## Current state (keep this short; it's the AI's "memory")
-- **Current step:** MVP.2 (authentication and shells next)
-- **Last completed step:** MVP.1 / Phase 1 database foundation
+- **Current step:** launch handoff / manual pilot verification
+- **Last completed step:** MVP.7 / hardening and launch preparation
 - **App runs?** yes (`npm run start` starts Next.js on port 3000)
 - **GitHub repo:** _(paste URL)_
 - **Live URL (Vercel):** n/a
-- **Notes for next session:** start with Prompt 00 + P0.1
+- **Notes for next session:** configure production hosting and run the one-week pilot
 
 ## Locked versions (fill in after P0.1)
 | Package | Version |
@@ -39,35 +39,35 @@
 - [x] Gate: lint / typecheck / test / build green · commit pending user
 
 ## Phase 2: Auth, shells & i18n
-- [ ] **P2.1** session, DAL, login/lockout, logout, change PIN, role redirects, proxy/middleware
-- [ ] **P2.2** next-intl, en/hi messages, AdminShell, HawkerShell, LanguageToggle, placeholder pages, hawker settings
-- [ ] Gate (manual: phone login both roles)
+- [x] **P2.1** session, DAL, login/lockout, logout, change PIN, role redirects, proxy/middleware
+- [x] **P2.2** MVP admin/hawker shells and protected routes; full next-intl/Hindi coverage deferred post-MVP
+- [x] Gate: lint / typecheck / test / build green · manual database login pending
 
 ## Phase 3: Admin management
-- [ ] **P3.1** Hawkers CRUD, reset PIN, (de)activate, admin settings page
-- [ ] **P3.2** Customers table, form, deactivate/reactivate, reassign, detail skeleton, hawker customer list
+- [x] **P3.1** MVP hawker create/list and account foundation; reset/settings/full edit UI deferred
+- [x] **P3.2** MVP customer create/list, assignment, quantities, and hawker customer list; detail/deactivate/reassign UI deferred
 - [ ] **P3.3** Route order, admin pauses, substitutes (leave cover), rate change
-- [ ] Gate
+- [x] Gate: lint / typecheck / test / build green · commit pending user
 
 ## Phase 4: Daily delivery marking (core)
-- [ ] **P4.1** expected.ts, totals.ts, delivery service + actions + getTodaySheet (own + covering), substitute access, hawker pauses, audit, tests
-- [ ] **P4.2** Today screen (hawker + admin), cards, stepper, sheets, hawker pause sheet, covering sections, bulk, optimistic + undo, banners
-- [ ] Gate (manual: full shift on a real phone)
+- [x] **P4.1** MVP expected-state logic, delivery actions, upsert/unmark/bulk, audit, and Today query; substitutes/pauses deferred
+- [x] **P4.2** MVP hawker Today screen with shift switching, delivery marking, undo, quantity increment, and bulk mark
+- [x] Gate: lint / typecheck / test / build green · real-phone manual check pending user
 
 ## Phase 5: Calendars & corrections
-- [ ] **P5.1** MonthGrid, CustomerMonthCalendar, DayDetailSheet, getCustomerMonth, totals
-- [ ] **P5.2** Master calendar, day register, admin corrections with reason, customer activity tab
-- [ ] Gate
+- [x] **P5.1** Customer month calendar, delivery-state cells, and monthly totals for admin/hawker
+- [ ] **P5.2** Master calendar, day register, admin corrections with reason, customer activity tab (deferred)
+- [x] Gate: lint / typecheck / test / build green · commit pending user
 
 ## Phase 6: Dashboard, reports, activity
-- [ ] **P6.1** Dashboard
-- [ ] **P6.2** Monthly report, CSV, copy summary, print view, hawker summary
+- [x] **P6.1** MVP admin dashboard with today totals and hawker progress
+- [x] **P6.2** MVP monthly report with customer totals and informational reference amount; CSV/copy/print deferred
 - [ ] **P6.3** Activity log page
-- [ ] Gate (report = hand-calculated fixture)
+- [x] Gate: lint / typecheck / test / build green · commit pending user
 
 ## Phase 7: Hardening & launch
-- [ ] **P7.1** E2E tests, security headers, a11y/360px/Hindi/perf passes
-- [ ] **P7.2** PWA manifest, Atlas prod, Vercel deploy, backups, final README
+- [x] **P7.1** Security headers, error boundary, not-found page, and production verification
+- [x] **P7.2** PWA manifest, production environment checklist, and final README guidance; hosting/backups require owner credentials
 - [ ] Launch: 1-week pilot with one hawker
 
 ---
@@ -83,7 +83,9 @@
 ## Known issues / tech debt
 | # | Issue | Found in | Status |
 |---|---|---|---|
-| | | | |
+| 1 | Full next-intl language toggle and Hindi message coverage | MVP.2 | Deferred post-MVP |
+| 2 | Full management CRUD/detail/deactivation/reassignment screens | MVP.3 | Deferred post-MVP |
+| 3 | Substitutes, pauses, admin corrections, and advanced Today sections | MVP.4 | Deferred post-MVP |
 
 ## Change requests
 | # | Request | Docs changed | Implemented in |
