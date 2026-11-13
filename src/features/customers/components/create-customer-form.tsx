@@ -7,7 +7,10 @@ export function CreateCustomerForm({ hawkers }: { hawkers: Array<{ id: string; n
   const [message, setMessage] = useState(""); const [pending, setPending] = useState(false);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setPending(true); setMessage("");
-    const result = await createCustomerAction(Object.fromEntries(new FormData(event.currentTarget).entries()));
+    const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+    values.morningQtyMl = String(Number(values.morningQtyMl) * 1000);
+    values.eveningQtyMl = String(Number(values.eveningQtyMl) * 1000);
+    const result = await createCustomerAction(values);
     setPending(false); setMessage(result.ok ? "Customer created." : result.error.message);
     if (result.ok) event.currentTarget.reset();
   }
@@ -17,8 +20,8 @@ export function CreateCustomerForm({ hawkers }: { hawkers: Array<{ id: string; n
     <input name="address" required placeholder="Address" className="rounded-md border px-3 py-2 md:col-span-2" />
     <input name="area" placeholder="Area (optional)" className="rounded-md border px-3 py-2" />
     <select name="hawkerId" required className="rounded-md border px-3 py-2"><option value="">Assign hawker</option>{hawkers.map((hawker) => <option key={hawker.id} value={hawker.id}>{hawker.name}</option>)}</select>
-    <input name="morningQtyMl" type="number" min="0" defaultValue="0" required placeholder="Morning ml" className="rounded-md border px-3 py-2" />
-    <input name="eveningQtyMl" type="number" min="0" defaultValue="0" required placeholder="Evening ml" className="rounded-md border px-3 py-2" />
+    <label className="text-sm">Morning bottles (1 L each)<input name="morningQtyMl" type="number" min="0" defaultValue="0" required placeholder="Morning bottles" className="mt-1 w-full rounded-md border px-3 py-2" /></label>
+    <label className="text-sm">Evening bottles (1 L each)<input name="eveningQtyMl" type="number" min="0" defaultValue="0" required placeholder="Evening bottles" className="mt-1 w-full rounded-md border px-3 py-2" /></label>
     <input name="rateRupees" type="number" min="0" step="0.01" placeholder="Rate per litre (default ₹65)" className="rounded-md border px-3 py-2" />
     <input name="startDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} className="rounded-md border px-3 py-2" />
     <button disabled={pending} className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-60 md:col-span-2">{pending ? "Saving…" : "Add customer"}</button>

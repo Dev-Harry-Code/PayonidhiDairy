@@ -41,6 +41,12 @@ export function todayKey(now: Date = new Date()): string {
   return toDateKey(now);
 }
 
+export function formatTime12(value: Date | string | null | undefined): string {
+  if (!value) return "—";
+  const date = value instanceof Date ? value : new Date(value);
+  return new Intl.DateTimeFormat("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }).format(date);
+}
+
 export function addDaysKey(dateKey: string, days: number): string {
   return toDateKey(addDays(parseDateKey(dateKey), days));
 }

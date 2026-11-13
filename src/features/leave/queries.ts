@@ -1,0 +1,6 @@
+import "server-only";
+import { connectDB } from "@/lib/db";
+import { requireRole } from "@/lib/dal";
+import { HawkerLeaveModel, UserModel } from "@/models";
+export async function getHawkerLeaves() { const actor = await requireRole(["hawker"]); await connectDB(); const leaves = await HawkerLeaveModel.find({ hawkerId: actor.userId }).sort({ createdAt: -1 }).limit(10).lean(); return leaves.map((leave) => ({ id: leave._id.toString(), fromDate: leave.fromDate, toDate: leave.toDate, reason: leave.reason, status: leave.status, reviewNote: leave.reviewNote })); }
+export async function listLeaveRequests() { await requireRole(["admin"]); await connectDB(); const leaves = await HawkerLeaveModel.find({ status: { $in: ["pending", "approved"] } }).sort({ status: 1, fromDate: 1 }).lean(); const ids = leaves.flatMap((leave) => [leave.hawkerId, leave.replacementHawkerId].filter(Boolean)); const users = await UserModel.find({ _id: { $in: ids } }).select({ name: 1 }).lean(); const names = new Map(users.map((user) => [user._id.toString(), user.name])); return leaves.map((leave) => ({ id: leave._id.toString(), hawkerName: names.get(leave.hawkerId.toString()) ?? "Unknown", fromDate: leave.fromDate, toDate: leave.toDate, reason: leave.reason, status: leave.status, replacementName: leave.replacementHawkerId ? names.get(leave.replacementHawkerId.toString()) ?? null : null })); }

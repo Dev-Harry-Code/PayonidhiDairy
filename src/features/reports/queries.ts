@@ -8,16 +8,19 @@ import { getCustomerMonth } from "@/features/deliveries/month";
 import { getSettings } from "@/features/settings/queries";
 import { amountPaise, effectiveRatePaise } from "@/lib/units";
 
-export async function getDashboard(dateKey: string) {
+export async function getDashboard(dateKey: string, searchTerm = "") {
   await requireRole(["admin"]); await connectDB();
   const monthKey = dateKey.slice(0, 7);
   const monthDateKeys = monthDays(monthKey);
-  const [hawkers, customers, entries, settings] = await Promise.all([
+  const [loadedHawkers, loadedCustomers, entries, settings] = await Promise.all([
     UserModel.find({ role: "hawker", active: true }).sort({ name: 1 }).lean(),
     CustomerModel.find({ active: true }).lean(),
     DeliveryEntryModel.find({ dateKey }).lean(),
     getSettings(),
   ]);
+  const query = searchTerm.trim().toLowerCase();
+  const hawkers = query ? loadedHawkers.filter((hawker) => `${hawker.name} ${hawker.phone}`.toLowerCase().includes(query)) : loadedHawkers;
+  const customers = query ? loadedCustomers.filter((customer) => `${customer.name} ${customer.phone ?? ""} ${customer.address} ${customer.area ?? ""}`.toLowerCase().includes(query) || hawkers.some((hawker) => hawker._id.toString() === customer.hawkerId.toString())) : loadedCustomers;
   const todayDelivered = entries.filter((entry) => entry.status === "delivered");
   const hawkerProgress = hawkers.map((hawker) => {
     const ids = new Set(customers.filter((customer) => customer.hawkerId.toString() === hawker._id.toString()).map((customer) => customer._id.toString()));
@@ -54,7 +57,7 @@ export async function getMonthlyReport(monthKey: string) {
   await requireRole(["admin"]); await connectDB();
   const [customers, hawkers] = await Promise.all([CustomerModel.find().sort({ name: 1 }).lean(), UserModel.find({ role: "hawker" }).lean()]);
   const hawkerNames = new Map(hawkers.map((hawker) => [hawker._id.toString(), hawker.name]));
-  const rows = await Promise.all(customers.map(async (customer) => { const report = await getCustomerMonth(customer._id.toString(), monthKey); return { id: report.customer.id, name: report.customer.name, hawkerName: hawkerNames.get(customer.hawkerId.toString()) ?? "—", ...report.totals, ratePaise: customer.ratePaise }; }));
+  const rows = await Promise.all(customers.map(async (customer) => { const report = await getCustomerMonth(customer._id.toString(), monthKey); return { id: report.customer.id, name: report.customer.name, hawkerName: hawkerNames.get(customer.hawkerId.toString()) ?? "—", ...report.totals, dailyDemandMl: customer.morningQtyMl + customer.eveningQtyMl, morningDemandMl: customer.morningQtyMl, eveningDemandMl: customer.eveningQtyMl, ratePaise: customer.ratePaise }; }));
   const days = monthDays(monthKey).map((dateKey) => ({ dateKey, totalMl: 0 }));
   const entries = await DeliveryEntryModel.find({ dateKey: { $in: days.map((day) => day.dateKey) }, status: "delivered" }).lean();
   const totalsByDay = new Map<string, number>(); entries.forEach((entry) => totalsByDay.set(entry.dateKey, (totalsByDay.get(entry.dateKey) ?? 0) + entry.quantityMl));
