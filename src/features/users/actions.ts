@@ -31,9 +31,10 @@ export async function updateHawkerAction(input: unknown): Promise<ActionResult<{
   await connectDB();
   const duplicate = await UserModel.exists({ phone, _id: { $ne: parsed.data.id } });
   if (duplicate) return fail("CONFLICT", "errors.phoneInUse");
-  const user = await UserModel.findOneAndUpdate({ _id: parsed.data.id, role: "hawker" }, { name: parsed.data.name, phone }, { new: true, runValidators: true });
+  const update = { name: parsed.data.name, phone, ...(parsed.data.pin ? { pinHash: await bcrypt.hash(parsed.data.pin, 10), $inc: { sessionVersion: 1 } } : {}) };
+  const user = await UserModel.findOneAndUpdate({ _id: parsed.data.id, role: "hawker" }, update, { new: true, runValidators: true });
   if (!user) return fail("NOT_FOUND", "errors.notFound");
-  await writeAudit({ actor: { id: actor.userId, role: actor.role }, action: "user.update", entity: "User", entityId: user._id, summary: `Updated hawker ${user.name}` });
+  await writeAudit({ actor: { id: actor.userId, role: actor.role }, action: "user.update", entity: "User", entityId: user._id, summary: `Updated hawker ${user.name}${parsed.data.pin ? " and changed PIN" : ""}` });
   return ok({ id: user._id.toString() });
 }
 
