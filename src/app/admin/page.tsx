@@ -4,11 +4,14 @@ import { getDashboard } from "@/features/reports/queries";
 import { formatMonthLabel, parseDateKey, todayKey } from "@/lib/dates";
 import { formatLitres, formatRupees } from "@/lib/units";
 import { getDay } from "date-fns";
+import { listPendingInquiries } from "@/features/inquiries/queries";
+import { InquiryReviewCard } from "@/features/inquiries/components/inquiry-review-card";
 
 export default async function AdminPage() {
   await requireRole(["admin"]);
   const dateKey = todayKey();
   const dashboard = await getDashboard(dateKey);
+  const pendingInquiries = await listPendingInquiries();
   const calendarOffset = getDay(parseDateKey(`${dashboard.monthKey}-01`));
   const maxDayMl = Math.max(...dashboard.calendar.map((day) => day.totalMl), 1);
 
@@ -25,6 +28,8 @@ export default async function AdminPage() {
         <Card><CardHeader><CardTitle className="text-muted-foreground">Completion</CardTitle></CardHeader><CardContent><p className="text-3xl font-semibold">{dashboard.today.completionPercent}%</p><div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(dashboard.today.completionPercent, 100)}%` }} /></div></CardContent></Card>
         <Card><CardHeader><CardTitle className="text-muted-foreground">Active customers</CardTitle></CardHeader><CardContent><p className="text-3xl font-semibold">{dashboard.activeCustomers}</p><p className="mt-1 text-sm text-muted-foreground">across {dashboard.hawkers.length} hawker routes</p></CardContent></Card>
       </div>
+
+      {pendingInquiries.length > 0 && <section className="space-y-3"><div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700">Needs your review</p><h2 className="text-2xl font-semibold">New customer requests</h2></div>{pendingInquiries.map((inquiry) => <InquiryReviewCard key={inquiry.id} inquiry={inquiry} />)}</section>}
 
       <div className="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
         <Card><CardHeader className="border-b border-border/70"><CardTitle>Customer delivery ledger</CardTitle><p className="text-sm text-muted-foreground">How much each customer demanded, received, and is worth today.</p></CardHeader><CardContent className="p-0"><div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left text-sm"><thead className="border-b bg-muted/40"><tr><th className="p-3">Customer</th><th className="p-3">Demand</th><th className="p-3">Delivered</th><th className="p-3">Progress</th><th className="p-3 text-right">Expected</th></tr></thead><tbody>{dashboard.todayCustomers.map((customer) => <tr key={customer.id} className="border-b last:border-0"><td className="p-3"><p className="font-medium">{customer.name}</p><p className="text-xs text-muted-foreground">{customer.hawkerName} · AM {formatLitres(customer.morning.deliveredMl)} / {formatLitres(customer.morning.demandMl)} · PM {formatLitres(customer.evening.deliveredMl)} / {formatLitres(customer.evening.demandMl)}</p></td><td className="p-3">{formatLitres(customer.demandMl)}</td><td className="p-3 font-medium">{formatLitres(customer.deliveredMl)}</td><td className="p-3"><div className="flex items-center gap-2"><div className="h-2 w-20 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full ${customer.completionPercent >= 100 ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${Math.min(customer.completionPercent, 100)}%` }} /></div><span className="text-xs font-semibold">{customer.completionPercent}%</span></div></td><td className="p-3 text-right font-semibold">{formatRupees(customer.deliveredAmountPaise)}</td></tr>)}</tbody></table>{dashboard.todayCustomers.length === 0 && <p className="p-6 text-sm text-muted-foreground">No active customers yet.</p>}</div></CardContent></Card>

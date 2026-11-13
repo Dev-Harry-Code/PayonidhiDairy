@@ -5,8 +5,10 @@ import { connectDB } from "@/lib/db";
 import { requireRole } from "@/lib/dal";
 import { fail, ok, validationError, type ActionResult } from "@/lib/result";
 import { normalisePhone } from "@/lib/phone";
-import { CustomerModel, UserModel } from "@/models";
+import { CustomerModel, DeliveryEntryModel, UserModel } from "@/models";
 import { customerInputSchema, deactivateCustomerSchema, updateCustomerSchema } from "@/features/customers/schemas";
+import { deleteCustomerRecordsSchema, removeCustomerSchema } from "@/features/inquiries/schemas";
+import { todayKey } from "@/lib/dates";
 import { writeAudit } from "@/lib/audit";
 
 export async function createCustomerAction(input: unknown): Promise<ActionResult<{ id: string }>> {
@@ -50,6 +52,33 @@ export async function deactivateCustomerAction(input: unknown): Promise<ActionRe
   if (!customer) return fail("NOT_FOUND", "errors.notFound");
   await writeAudit({ actor: { id: actor.userId, role: actor.role }, action: "customer.deactivate", entity: "Customer", entityId: customer._id, summary: `Deactivated customer ${customer.name}` });
   return ok(undefined);
+}
+
+export async function removeCustomerAction(input: unknown): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+  const parsed = removeCustomerSchema.safeParse(input);
+  if (!parsed.success) return validationError(parsed.error);
+  await connectDB();
+  const customer = await CustomerModel.findById(parsed.data.id);
+  if (!customer) return fail("NOT_FOUND", "errors.notFound");
+  const before = { active: customer.active, endDate: customer.endDate };
+  customer.active = false;
+  customer.endDate = customer.endDate ?? todayKey();
+  await customer.save();
+  await writeAudit({ actor: { id: actor.userId, role: actor.role }, action: "customer.remove", entity: "Customer", entityId: customer._id, summary: `Removed customer ${customer.name}`, before, after: { active: customer.active, endDate: customer.endDate } });
+  return ok(undefined);
+}
+
+export async function deleteCustomerRecordsAction(input: unknown): Promise<ActionResult<{ count: number }>> {
+  const actor = await requireRole(["admin"]);
+  const parsed = deleteCustomerRecordsSchema.safeParse(input);
+  if (!parsed.success) return validationError(parsed.error);
+  await connectDB();
+  const customer = await CustomerModel.findById(parsed.data.id).lean();
+  if (!customer) return fail("NOT_FOUND", "errors.notFound");
+  const result = await DeliveryEntryModel.deleteMany({ customerId: customer._id });
+  await writeAudit({ actor: { id: actor.userId, role: actor.role }, action: "customer.records_delete", entity: "Customer", entityId: customer._id, summary: `Deleted ${result.deletedCount} delivery records for ${customer.name}`, after: { deletedCount: result.deletedCount } });
+  return ok({ count: result.deletedCount });
 }
 
 async function prepareCustomer(input: Record<string, unknown>) {
