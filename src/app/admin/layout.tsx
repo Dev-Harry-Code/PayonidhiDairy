@@ -19,6 +19,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               <Link className="rounded-lg px-3 py-2 font-medium text-muted-foreground hover:bg-card hover:text-foreground" href="/admin">Overview</Link>
               <Link className="rounded-lg px-3 py-2 font-medium text-muted-foreground hover:bg-card hover:text-foreground" href="/admin/hawkers">Hawkers</Link>
               <Link className="rounded-lg px-3 py-2 font-medium text-muted-foreground hover:bg-card hover:text-foreground" href="/admin/customers">Customers</Link>
+              <Link className="rounded-lg px-3 py-2 font-medium text-muted-foreground hover:bg-card hover:text-foreground" href="/admin/reports">Reports</Link>
             </nav>
           </div>
           <div className="flex items-center gap-3"><span className="hidden text-sm text-muted-foreground sm:inline">Hi, {session.name}</span><LogoutButton /></div>
