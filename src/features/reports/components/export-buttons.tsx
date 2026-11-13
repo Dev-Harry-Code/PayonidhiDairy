@@ -21,9 +21,9 @@ function printPdf(title: string, rows: ExportRow[]) {
   drawRow(headers, true); rows.forEach((row) => drawRow(headers.map((header) => row[header] ?? ""))); doc.save(`${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.pdf`);
 }
 
-export function ExportButtons({ title, filename, rows, compact = false }: { title: string; filename: string; rows: ExportRow[]; compact?: boolean }) {
+export function ExportButtons({ title, filename, rows, compact = false, includePdf = true }: { title: string; filename: string; rows: ExportRow[]; compact?: boolean; includePdf?: boolean }) {
   const disabled = rows.length === 0;
-  return <div className="flex flex-wrap gap-2"><button type="button" disabled={disabled} onClick={() => downloadExcel(rows, filename)} className={`${compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm"} rounded-lg border bg-card font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50`}>Excel</button><button type="button" disabled={disabled} onClick={() => printPdf(title, rows)} className={`${compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm"} rounded-lg border bg-card font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50`}>PDF</button></div>;
+  return <div className="flex flex-wrap gap-2"><button type="button" disabled={disabled} onClick={() => downloadExcel(rows, filename)} className={`${compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm"} rounded-lg border bg-card font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50`}>Excel</button>{includePdf && <button type="button" disabled={disabled} onClick={() => printPdf(title, rows)} className={`${compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm"} rounded-lg border bg-card font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50`}>PDF</button>}</div>;
 }
 
 export function ExportGroup({ label, title, filename, rows }: { label: string; title: string; filename: string; rows: ExportRow[] }) {

@@ -8,7 +8,7 @@ const DEFAULT_SETTINGS = {
   key: "app" as const,
   businessName: "Payonidhi Dairy",
   defaultRatePaise: 6_500,
-  hawkerEditDays: 1,
+  hawkerEditDays: 2,
   hawkerMaxPauseDays: 3,
   showAmountToHawkers: false,
   eveningStartsAt: "14:00",
@@ -26,6 +26,10 @@ export async function getSettings(): Promise<Settings> {
   if (!settings) throw new Error("Unable to load application settings");
   if (settings.defaultRatePaise === 6_000) {
     const migrated = await SettingsModel.findOneAndUpdate({ key: "app", defaultRatePaise: 6_000 }, { $set: { defaultRatePaise: 6_500 } }, { new: true }).lean<Settings>();
+    if (migrated) return migrated;
+  }
+  if (settings.hawkerEditDays === 1) {
+    const migrated = await SettingsModel.findOneAndUpdate({ key: "app", hawkerEditDays: 1 }, { $set: { hawkerEditDays: 2 } }, { new: true }).lean<Settings>();
     if (migrated) return migrated;
   }
   return settings;

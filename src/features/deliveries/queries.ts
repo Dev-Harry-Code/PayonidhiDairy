@@ -9,7 +9,7 @@ import type { Shift } from "@/lib/constants";
 export async function getTodaySheet({ dateKey, shift }: { dateKey: string; shift: Shift }) {
   const session = await requireRole(["hawker", "admin"]);
   await connectDB();
-  const customers = await CustomerModel.find({ hawkerId: new Types.ObjectId(session.userId), active: true }).sort({ routeOrder: 1, name: 1 }).lean();
+  const customers = await CustomerModel.find({ ...(session.role === "hawker" ? { hawkerId: new Types.ObjectId(session.userId) } : {}), active: true }).sort({ routeOrder: 1, name: 1 }).lean();
   const entries = await DeliveryEntryModel.find({ dateKey, shift, customerId: { $in: customers.map((c) => c._id) } }).lean();
   const morningEntries = shift === "evening" ? await DeliveryEntryModel.find({ dateKey, shift: "morning", customerId: { $in: customers.map((c) => c._id) } }).lean() : [];
   const byCustomer = new Map(entries.map((entry) => [entry.customerId.toString(), entry]));
