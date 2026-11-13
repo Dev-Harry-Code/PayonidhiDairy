@@ -1,27 +1,31 @@
 "use client";
 
 type ExportRow = Record<string, string | number>;
+import * as XLSX from "xlsx";
+import { jsPDF } from "jspdf";
 
-function escapeHtml(value: string | number) {
-  return String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character] ?? character);
-}
-
-function downloadExcel(title: string, rows: ExportRow[], filename: string) {
-  const headers = Object.keys(rows[0] ?? {});
-  const table = `<html><head><meta charset="UTF-8"><style>body{font-family:Arial}th{background:#147d63;color:white}th,td{border:1px solid #ccc;padding:6px;text-align:left}</style></head><body><h2>${escapeHtml(title)}</h2><table><thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${headers.map((header) => `<td>${escapeHtml(row[header] ?? "")}</td>`).join("")}</tr>`).join("")}</tbody></table></body></html>`;
-  const blob = new Blob([table], { type: "application/vnd.ms-excel;charset=utf-8" });
-  const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = `${filename}.xls`; link.click(); URL.revokeObjectURL(url);
+function downloadExcel(rows: ExportRow[], filename: string) {
+  const sheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, sheet, "Report");
+  XLSX.writeFile(workbook, `${filename}.xlsx`, { bookType: "xlsx" });
 }
 
 function printPdf(title: string, rows: ExportRow[]) {
   const headers = Object.keys(rows[0] ?? {});
-  const table = `<h1>${escapeHtml(title)}</h1><p>Generated ${new Date().toLocaleString()}</p><table><thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${headers.map((header) => `<td>${escapeHtml(row[header] ?? "")}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
-  const popup = window.open("", "_blank", "width=1100,height=800");
-  if (!popup) return;
-  popup.document.write(`<html><head><title>${escapeHtml(title)}</title><style>body{font-family:Arial;padding:32px;color:#163b34}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #cbd5d1;padding:8px;text-align:left}th{background:#147d63;color:#fff}h1{margin-bottom:4px}@media print{button{display:none}}</style></head><body>${table}<script>window.onload=()=>window.print()</script></body></html>`); popup.document.close();
+  const doc = new jsPDF({ orientation: headers.length > 5 ? "landscape" : "portrait", unit: "pt", format: "a4" });
+  const margin = 32; const pageWidth = doc.internal.pageSize.getWidth(); const usableWidth = pageWidth - margin * 2; const columnWidth = usableWidth / Math.max(headers.length, 1);
+  doc.setFontSize(16); doc.setTextColor(20, 82, 67); doc.text(title, margin, margin); doc.setFontSize(9); doc.setTextColor(90, 105, 100); doc.text(`Generated ${new Date().toLocaleString()}`, margin, margin + 16);
+  let y = margin + 38;
+  const drawRow = (values: Array<string | number>, header = false) => { const lines = values.map((value) => doc.splitTextToSize(String(value ?? ""), columnWidth - 8)); const height = Math.max(...lines.map((line) => line.length), 1) * 12 + 10; if (y + height > doc.internal.pageSize.getHeight() - margin) { doc.addPage(); y = margin; } if (header) { doc.setFillColor(20, 125, 99); doc.setTextColor(255, 255, 255); doc.rect(margin, y, usableWidth, height, "F"); } else { doc.setTextColor(30, 50, 45); doc.setDrawColor(210, 220, 216); doc.rect(margin, y, usableWidth, height); } lines.forEach((line, index) => doc.text(line, margin + index * columnWidth + 4, y + 14)); y += height; };
+  drawRow(headers, true); rows.forEach((row) => drawRow(headers.map((header) => row[header] ?? ""))); doc.save(`${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.pdf`);
 }
 
 export function ExportButtons({ title, filename, rows, compact = false }: { title: string; filename: string; rows: ExportRow[]; compact?: boolean }) {
   const disabled = rows.length === 0;
-  return <div className="flex flex-wrap gap-2"><button type="button" disabled={disabled} onClick={() => downloadExcel(title, rows, filename)} className={`${compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm"} rounded-lg border bg-card font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50`}>Excel</button><button type="button" disabled={disabled} onClick={() => printPdf(title, rows)} className={`${compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm"} rounded-lg border bg-card font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50`}>PDF</button></div>;
+  return <div className="flex flex-wrap gap-2"><button type="button" disabled={disabled} onClick={() => downloadExcel(rows, filename)} className={`${compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm"} rounded-lg border bg-card font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50`}>Excel</button><button type="button" disabled={disabled} onClick={() => printPdf(title, rows)} className={`${compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm"} rounded-lg border bg-card font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50`}>PDF</button></div>;
+}
+
+export function ExportGroup({ label, title, filename, rows }: { label: string; title: string; filename: string; rows: ExportRow[] }) {
+  return <div className="rounded-xl border bg-card/80 px-3 py-2"><p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{label}</p><ExportButtons title={title} filename={filename} rows={rows} compact /></div>;
 }

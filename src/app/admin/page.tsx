@@ -6,7 +6,8 @@ import { formatLitres, formatRupees } from "@/lib/units";
 import { getDay } from "date-fns";
 import { listPendingInquiries } from "@/features/inquiries/queries";
 import { InquiryReviewCard } from "@/features/inquiries/components/inquiry-review-card";
-import { ExportButtons } from "@/features/reports/components/export-buttons";
+import { ExportGroup } from "@/features/reports/components/export-buttons";
+import { DashboardAnalytics } from "@/features/reports/components/dashboard-analytics";
 
 export default async function AdminPage() {
   await requireRole(["admin"]);
@@ -22,7 +23,7 @@ export default async function AdminPage() {
     <section className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Admin workspace</p><h1 className="mt-1 text-3xl font-semibold tracking-tight md:text-4xl">Today overview</h1><p className="mt-2 text-sm text-muted-foreground">A clear view of milk delivered, expected value, and route progress.</p></div>
-        <div className="flex flex-wrap items-center gap-2"><ExportButtons title={`Customer delivery overview · ${dateKey}`} filename={`payonidhi-overview-${dateKey}`} rows={overviewRows} compact /><ExportButtons title={`Monthly delivery summary · ${dashboard.monthKey}`} filename={`payonidhi-monthly-summary-${dashboard.monthKey}`} rows={monthlyRows} compact /></div>
+        <div className="flex flex-wrap items-center gap-2"><ExportGroup label="Customer-wise export" title={`Customer delivery overview · ${dateKey}`} filename={`payonidhi-overview-${dateKey}`} rows={overviewRows} /><ExportGroup label="Monthly export" title={`Monthly delivery summary · ${dashboard.monthKey}`} filename={`payonidhi-monthly-summary-${dashboard.monthKey}`} rows={monthlyRows} /></div>
         <span className="w-fit rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground">{dateKey}</span>
       </div>
 
@@ -34,6 +35,7 @@ export default async function AdminPage() {
       </div>
 
       <Card><CardHeader><CardTitle>Quick analytics</CardTitle><p className="text-sm text-muted-foreground">Operational signals from today and this month.</p></CardHeader><CardContent className="grid gap-4 sm:grid-cols-3"><div className="rounded-xl bg-muted/40 p-4"><p className="text-sm text-muted-foreground">Average delivered per customer</p><p className="mt-1 text-2xl font-semibold">{dashboard.activeCustomers ? (dashboard.today.totalMl / dashboard.activeCustomers / 1000).toFixed(1) : "0.0"} L</p></div><div className="rounded-xl bg-muted/40 p-4"><p className="text-sm text-muted-foreground">Month-to-date milk</p><p className="mt-1 text-2xl font-semibold">{formatLitres(dashboard.calendar.reduce((sum, day) => sum + day.totalMl, 0))}</p></div><div className="rounded-xl bg-muted/40 p-4"><p className="text-sm text-muted-foreground">Month-to-date collection</p><p className="mt-1 text-2xl font-semibold">{formatRupees(dashboard.calendar.reduce((sum, day) => sum + day.amountPaise, 0))}</p></div></CardContent></Card>
+      <DashboardAnalytics calendar={dashboard.calendar} customers={dashboard.todayCustomers} />
 
       {pendingInquiries.length > 0 && <section className="space-y-3"><div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700">Needs your review</p><h2 className="text-2xl font-semibold">New customer requests</h2></div>{pendingInquiries.map((inquiry) => <InquiryReviewCard key={inquiry.id} inquiry={inquiry} />)}</section>}
 
