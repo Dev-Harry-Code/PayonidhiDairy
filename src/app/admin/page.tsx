@@ -14,14 +14,13 @@ import { AdminLeaveCard } from "@/features/leave/components/admin-leave-card";
 import { getTodaySheet } from "@/features/deliveries/queries";
 import { TodaySheet } from "@/features/deliveries/components/today-sheet";
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ q?: string; date?: string; shift?: string }> }) {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ date?: string; shift?: string }> }) {
   await requireRole(["admin"]);
   const params = await searchParams;
   const today = todayKey();
   const dateKey = params.date && isValidDateKey(params.date) && params.date <= today ? params.date : today;
   const shift = params.shift === "evening" ? "evening" : "morning";
-  const query = params.q?.trim() ?? "";
-  const dashboard = await getDashboard(dateKey, query);
+  const dashboard = await getDashboard(dateKey);
   const editSheet = await getTodaySheet({ dateKey, shift });
   const pendingInquiries = await listPendingInquiries();
   const [leaveRequests, activeHawkers] = await Promise.all([listLeaveRequests(), listHawkers()]);
@@ -38,9 +37,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <span className="w-fit rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground">{dateKey}</span>
       </div>
 
-      <form className="flex flex-col gap-2 rounded-2xl border bg-card p-4 sm:flex-row" action="/admin"><input name="q" defaultValue={query} placeholder="Search customers or hawkers by name, phone, or address" className="min-w-0 flex-1 rounded-lg border px-3 py-2" /><button className="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground">Search</button>{query && <a href="/admin" className="rounded-lg border px-4 py-2 text-center font-semibold">Clear</a>}</form>
-
-      <section className="space-y-3"><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Delivery corrections</p><h2 className="text-2xl font-semibold">Edit {dateKey}</h2><p className="text-sm text-muted-foreground">Admin can correct any past date. Changes are timestamped and audited.</p></div><form action="/admin" className="flex flex-wrap gap-2"><input type="hidden" name="q" value={query} /><input type="date" name="date" max={today} defaultValue={dateKey} className="rounded-lg border bg-card px-3 py-2 text-sm" /><input type="hidden" name="shift" value={shift} /><button className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Load date</button></form></div><div className="flex w-fit gap-1 rounded-xl bg-muted p-1"><a href={`/admin?date=${dateKey}&shift=morning${query ? `&q=${encodeURIComponent(query)}` : ""}`} className={`rounded-lg px-4 py-2 text-sm font-medium ${shift === "morning" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>Morning</a><a href={`/admin?date=${dateKey}&shift=evening${query ? `&q=${encodeURIComponent(query)}` : ""}`} className={`rounded-lg px-4 py-2 text-sm font-medium ${shift === "evening" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>Evening</a></div><TodaySheet dateKey={dateKey} shift={shift} rows={editSheet.rows} progress={editSheet.progress} /></section>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="border-primary/20 bg-primary text-primary-foreground shadow-lg shadow-primary/10"><CardHeader><CardTitle className="text-primary-foreground/75">Expected collection</CardTitle></CardHeader><CardContent><p className="text-3xl font-semibold">{formatRupees(dashboard.today.amountPaise)}</p><p className="mt-1 text-sm text-primary-foreground/70">from delivered milk today</p></CardContent></Card>
@@ -62,6 +58,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </div>
 
       <Card><CardHeader className="border-b border-border/70"><CardTitle>Today by hawker</CardTitle><p className="text-sm text-muted-foreground">Route completion and 1-litre bottle delivery</p></CardHeader><CardContent className="pt-4"><div className="space-y-1">{dashboard.hawkers.map((hawker) => <div key={hawker.id} className="flex items-center justify-between rounded-xl px-3 py-3 transition-colors hover:bg-muted/60"><div><p className="font-medium">{hawker.name}</p><p className="text-sm text-muted-foreground">Bottles: {(hawker.morning.deliveredMl + hawker.evening.deliveredMl) / 1000} / {(hawker.morning.demandMl + hawker.evening.demandMl) / 1000} · Morning {hawker.morning.delivered}/{hawker.morning.total} · Evening {hawker.evening.delivered}/{hawker.evening.total}</p></div><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${hawker.morning.pending + hawker.evening.pending ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>{hawker.morning.pending + hawker.evening.pending ? `${hawker.morning.pending + hawker.evening.pending} pending` : "Complete"}</span></div>)}</div></CardContent></Card>
+
+      <section className="space-y-3"><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Delivery corrections</p><h2 className="text-2xl font-semibold">Edit {dateKey}</h2><p className="text-sm text-muted-foreground">Admin can correct any past date. Changes are timestamped and audited.</p></div><form action="/admin" className="flex flex-wrap gap-2"><input type="date" name="date" max={today} defaultValue={dateKey} className="rounded-lg border bg-card px-3 py-2 text-sm" /><input type="hidden" name="shift" value={shift} /><button className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Load date</button></form></div><div className="flex w-fit gap-1 rounded-xl bg-muted p-1"><a href={`/admin?date=${dateKey}&shift=morning`} className={`rounded-lg px-4 py-2 text-sm font-medium ${shift === "morning" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>Morning</a><a href={`/admin?date=${dateKey}&shift=evening`} className={`rounded-lg px-4 py-2 text-sm font-medium ${shift === "evening" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>Evening</a></div><TodaySheet dateKey={dateKey} shift={shift} rows={editSheet.rows} progress={editSheet.progress} /></section>
     </section>
   );
 }
