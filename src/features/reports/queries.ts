@@ -6,7 +6,7 @@ import { CustomerModel, DeliveryEntryModel, UserModel } from "@/models";
 import { monthDays } from "@/lib/dates";
 import { getCustomerMonth } from "@/features/deliveries/month";
 import { getSettings } from "@/features/settings/queries";
-import { amountPaise } from "@/lib/units";
+import { amountPaise, effectiveRatePaise } from "@/lib/units";
 
 export async function getDashboard(dateKey: string) {
   await requireRole(["admin"]); await connectDB();
@@ -22,11 +22,15 @@ export async function getDashboard(dateKey: string) {
   const hawkerProgress = hawkers.map((hawker) => {
     const ids = new Set(customers.filter((customer) => customer.hawkerId.toString() === hawker._id.toString()).map((customer) => customer._id.toString()));
     const own = entries.filter((entry) => ids.has(entry.customerId.toString()));
-    const progress = (shift: "morning" | "evening") => ({ total: customers.filter((customer) => ids.has(customer._id.toString()) && (shift === "morning" ? customer.morningQtyMl : customer.eveningQtyMl) > 0).length, delivered: own.filter((entry) => entry.shift === shift && entry.status === "delivered").length, notDelivered: own.filter((entry) => entry.shift === shift && entry.status === "not_delivered").length, pending: customers.filter((customer) => ids.has(customer._id.toString()) && (shift === "morning" ? customer.morningQtyMl : customer.eveningQtyMl) > 0).length - own.filter((entry) => entry.shift === shift).length });
+    const progress = (shift: "morning" | "evening") => {
+      const scheduled = customers.filter((customer) => ids.has(customer._id.toString()) && (shift === "morning" ? customer.morningQtyMl : customer.eveningQtyMl) > 0);
+      const deliveredEntries = own.filter((entry) => entry.shift === shift && entry.status === "delivered");
+      return { total: scheduled.length, delivered: deliveredEntries.length, notDelivered: own.filter((entry) => entry.shift === shift && entry.status === "not_delivered").length, pending: scheduled.length - own.filter((entry) => entry.shift === shift).length, demandMl: scheduled.reduce((sum, customer) => sum + (shift === "morning" ? customer.morningQtyMl : customer.eveningQtyMl), 0), deliveredMl: deliveredEntries.reduce((sum, entry) => sum + entry.quantityMl, 0) };
+    };
     return { id: hawker._id.toString(), name: hawker.name, morning: progress("morning"), evening: progress("evening") };
   });
   const customerById = new Map(customers.map((customer) => [customer._id.toString(), customer]));
-  const rateFor = (customerId: string, storedRate?: number) => customerById.get(customerId)?.ratePaise ?? storedRate ?? settings.defaultRatePaise;
+  const rateFor = (customerId: string, storedRate?: number) => effectiveRatePaise(customerById.get(customerId)?.ratePaise ?? storedRate, settings.defaultRatePaise);
   const todayDemandMl = customers.reduce((sum, customer) => sum + customer.morningQtyMl + customer.eveningQtyMl, 0);
   const todayAmountPaise = todayDelivered.reduce((sum, entry) => sum + amountPaise(entry.quantityMl, rateFor(entry.customerId.toString(), entry.ratePaise)), 0);
   const todayDemandAmountPaise = customers.reduce((sum, customer) => sum + amountPaise(customer.morningQtyMl + customer.eveningQtyMl, customer.ratePaise ?? settings.defaultRatePaise), 0);
@@ -43,7 +47,7 @@ export async function getDashboard(dateKey: string) {
     const dayEntries = monthEntries.filter((entry) => entry.dateKey === key);
     return { dateKey: key, totalMl: dayEntries.reduce((sum, entry) => sum + entry.quantityMl, 0), amountPaise: dayEntries.reduce((sum, entry) => sum + amountPaise(entry.quantityMl, rateFor(entry.customerId.toString(), entry.ratePaise)), 0), deliveries: dayEntries.length };
   });
-  return { today: { morningMl: todayDelivered.filter((entry) => entry.shift === "morning").reduce((sum, entry) => sum + entry.quantityMl, 0), eveningMl: todayDelivered.filter((entry) => entry.shift === "evening").reduce((sum, entry) => sum + entry.quantityMl, 0), totalMl: todayDelivered.reduce((sum, entry) => sum + entry.quantityMl, 0), demandMl: todayDemandMl, completionPercent: todayDemandMl ? Math.round((todayDelivered.reduce((sum, entry) => sum + entry.quantityMl, 0) / todayDemandMl) * 100) : 0, amountPaise: todayAmountPaise, demandAmountPaise: todayDemandAmountPaise }, hawkers: hawkerProgress, activeCustomers: customers.length, todayCustomers, calendar, monthKey, last30Days: [] as Array<{ dateKey: string; totalMl: number }>, unmarkedYesterday: [] as Array<{ customerId: string; name: string; hawkerName: string; shift: "morning" | "evening" }> };
+  return { today: { morningMl: todayDelivered.filter((entry) => entry.shift === "morning").reduce((sum, entry) => sum + entry.quantityMl, 0), eveningMl: todayDelivered.filter((entry) => entry.shift === "evening").reduce((sum, entry) => sum + entry.quantityMl, 0), totalMl: todayDelivered.reduce((sum, entry) => sum + entry.quantityMl, 0), demandMl: todayDemandMl, demandBottles: todayDemandMl / 1000, deliveredBottles: todayDelivered.reduce((sum, entry) => sum + entry.quantityMl, 0) / 1000, completionPercent: todayDemandMl ? Math.round((todayDelivered.reduce((sum, entry) => sum + entry.quantityMl, 0) / todayDemandMl) * 100) : 0, amountPaise: todayAmountPaise, demandAmountPaise: todayDemandAmountPaise }, hawkers: hawkerProgress, activeCustomers: customers.length, todayCustomers, calendar, monthKey, last30Days: [] as Array<{ dateKey: string; totalMl: number }>, unmarkedYesterday: [] as Array<{ customerId: string; name: string; hawkerName: string; shift: "morning" | "evening" }> };
 }
 
 export async function getMonthlyReport(monthKey: string) {

@@ -7,7 +7,7 @@ import { getSettings } from "@/features/settings/queries";
 import { CustomerModel, DeliveryEntryModel } from "@/models";
 import { monthDays } from "@/lib/dates";
 import { resolveCell } from "@/features/deliveries/expected";
-import { amountPaise } from "@/lib/units";
+import { amountPaise, effectiveRatePaise } from "@/lib/units";
 
 export async function getCustomerMonth(customerId: string, monthKey: string) {
   const session = await requireRole(["admin", "hawker"]);
@@ -25,7 +25,7 @@ export async function getCustomerMonth(customerId: string, monthKey: string) {
   });
   const settings = await getSettings();
   const delivered = entries.filter((entry) => entry.status === "delivered");
-  const currentRatePaise = customer.ratePaise ?? settings.defaultRatePaise;
+  const currentRatePaise = effectiveRatePaise(customer.ratePaise, settings.defaultRatePaise);
   const totals = { daysDelivered: new Set(delivered.map((entry) => entry.dateKey)).size, deliveriesCount: delivered.length, notDeliveredCount: entries.filter((entry) => entry.status === "not_delivered").length, unmarkedCount: cells.flatMap((day) => [day.morning, day.evening]).filter((cell) => cell.state === "unmarked").length, pausedCount: 0, totalMl: delivered.reduce((sum, entry) => sum + entry.quantityMl, 0), referenceAmountPaise: session.role === "admin" || settings.showAmountToHawkers ? delivered.reduce((sum, entry) => sum + amountPaise(entry.quantityMl, currentRatePaise), 0) : undefined };
   return { customer: { id: customer._id.toString(), name: customer.name, phone: customer.phone, address: customer.address, area: customer.area, notes: customer.notes, hawkerId: customer.hawkerId.toString(), morningQtyMl: customer.morningQtyMl, eveningQtyMl: customer.eveningQtyMl, ratePaise: customer.ratePaise, startDate: customer.startDate, endDate: customer.endDate, active: customer.active }, days: cells, totals };
 }

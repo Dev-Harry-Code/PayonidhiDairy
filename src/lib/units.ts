@@ -27,6 +27,12 @@ export function amountPaise(quantityMl: number, ratePaise: number): number {
   return Math.round((quantityMl * ratePaise) / 1000);
 }
 
+/** Handles old records created when the form incorrectly stored rupees as paise. */
+export function effectiveRatePaise(ratePaise: number | null | undefined, fallbackPaise: number): number {
+  if (ratePaise === null || ratePaise === undefined) return fallbackPaise;
+  return ratePaise > 0 && ratePaise < 1_000 ? ratePaise * 100 : ratePaise;
+}
+
 export function isValidQtyMl(quantityMl: number, allowZero = false): boolean {
   if (!Number.isInteger(quantityMl)) return false;
   if (quantityMl === 0) return allowZero;
